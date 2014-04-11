@@ -1,4 +1,6 @@
-Clients of the P2P connect to a P2P web cache, where the clients will post their information (ip, port), once connected to the web cache, clients can connect to each other and transfer files.
 
-*the web cache we are using is not longer available.
+
+ClientS of the P2P connect to Gnutella web cache server, which store information of the clients(ip, port), once connected to the server, clients can connect to each other and transfer files.
+
+*the Gnutella web cache we are using is not longer available.
 
