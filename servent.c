@@ -164,11 +164,11 @@ int main() {
 		socket_con[a] = -1;
 	}
 	
-	printf("introduzca puerto\n");
-	printf("Conectandose a la WEBCACHE\n");
-	printf("iploc = %s \n", iploc);
+	printf("Insert a port\n");
+	printf("Connecting to WEBCACHE\n");
+	printf("IPloc = %s \n", iploc);
 	msg2 = (char*)malloc(MAX_MESSAGE);
-	memset(msg2, 0, sizeof(msg2));
+	memset(msg2, 0, MAX_MESSAGE);
 	msg2 = strcpy(msg2, "GET ");
 	strcat(msg2, G_ROWEBCACHE);
 	strcat(msg2, "?hostfile=1 HTTP/1.1\r\nHost: ctel011\r\n\r\n");
@@ -182,7 +182,7 @@ int main() {
 	lista_ips = (char **)calloc(MAX_IPS,MAX_LONG_IP);
 	conexiones = (char **)calloc(MAX_CONEXIONES, MAX_LONG_IP);
 	resp1 = (char *)malloc(MAX_MESSAGE);
-	memset(resp1, 0, sizeof(resp1));
+	memset(resp1, 0, MAX_MESSAGE);
 	resp2 = (char *)malloc(MAX_MESSAGE);
 
 	/* Chequear si devuelve -1! */
@@ -224,7 +224,7 @@ int main() {
 		perror("close");
 		exit(-1);
 	}
-	printf("Conectado a la WEBCACHE\nHacemos el handshake \n");
+	printf("Connecting to WEBCACHE\nMaking Handshake \n");
 	if(pthread_create( &hilo_comunica, NULL, handshake, NULL)!=0)
 	{
 		perror("pthread_create");
@@ -245,40 +245,40 @@ int main() {
 
 	pthread_join(hilo_interfaz,NULL);
 	pthread_join(hilo_escucha, NULL);
-	printf("main: padre: hilo terminado\n");
+	printf("main: terminated thread\n");
 	
 	free(resp1);
 	free(resp2);
 	
-	printf("adios!\n");
+	printf("bye!\n");
 
 	return 1;
 }
 void set_menu(char* param, char* valor){
 	if( strcasecmp(param, "rowebcache") == 0){
-		printf("G_ROWEBCACHE antes %s\n",G_ROWEBCACHE);
+		printf("G_ROWEBCACHE before %s\n",G_ROWEBCACHE);
 		G_ROWEBCACHE = (char*)malloc(strlen(valor));
 		strcpy(G_ROWEBCACHE, valor);
-		printf("G_ROWEBCACHE despues %s\n",G_ROWEBCACHE);
+		printf("G_ROWEBCACHE after %s\n",G_ROWEBCACHE);
 	}else if(strcasecmp(param, "localport") == 0){
-		printf("G_LOCALPORT antes %d\n", G_LOCALPORT);
+		printf("G_LOCALPORT before %d\n", G_LOCALPORT);
 		G_LOCALPORT = atoi(valor);
-		printf("G_LOCALPORT despues %d\n", G_LOCALPORT);
+		printf("G_LOCALPORT after %d\n", G_LOCALPORT);
 	}else if(strcasecmp(param, "sharepath") == 0){
-		printf("G_SHAREPATH antes %s\n",G_SHAREPATH);
+		printf("G_SHAREPATH before %s\n",G_SHAREPATH);
 		G_SHAREPATH = (char*)malloc(strlen(valor));
 		strcpy(G_SHAREPATH, valor);
-		printf("G_SHAREPATH despues %s\n",G_SHAREPATH);
+		printf("G_SHAREPATH after %s\n",G_SHAREPATH);
 	}else if(strcasecmp(param, "incomingpath") == 0){
-		printf("G_INCOMING antes %s\n",G_INCOMINGPATH);
+		printf("G_INCOMING before %s\n",G_INCOMINGPATH);
 		G_INCOMINGPATH = (char*)malloc(strlen(valor));
 		strcpy(G_INCOMINGPATH, valor);
-		printf("G_INCOMING despues %s\n",G_INCOMINGPATH);
+		printf("G_INCOMING after %s\n",G_INCOMINGPATH);
 	}else if(strcasecmp(param, "downloadpath") == 0){
-		printf("G_DOWNLOADPATH antes %s\n",G_DOWNLOADPATH);
+		printf("G_DOWNLOADPATH before %s\n",G_DOWNLOADPATH);
 		G_DOWNLOADPATH = (char*)malloc(strlen(valor));
 		strcpy(G_DOWNLOADPATH, valor);
-		printf("G_DOWNLOADPATH despues %s\n",G_DOWNLOADPATH);
+		printf("G_DOWNLOADPATH after %s\n",G_DOWNLOADPATH);
 	}
 
 
@@ -361,7 +361,7 @@ void * escuchar(){
 			char* ipConAux = inet_ntoa(their_addr.sin_addr);
 			char aux52[6];
 			socket_con[conex_libre]= socket_escucha;
-			printf("Conectado a la ip: %s, en el escucha\n",ipConAux);
+			printf("connecting to the ip: %s, listener\n",ipConAux);
 			strcat(ipCon, ipConAux);
 			strcat(ipCon, ":");
 			sprintf(aux52, "%d", aux51);
@@ -371,11 +371,15 @@ void * escuchar(){
 				perror("send");
 				exit(-1);
 			}
+            /*prueba*/
+
 			if ((nbytes=recv(socket_escucha, (char *) resprot2, MAX_MESSAGE, 0))<0){
 				perror("recv");
 				exit(-1);
 			}
-			if(pthread_create(&hilo_conexiones[conex_libre], NULL, recibir, (void *)socket_con[conex_libre])!=0)
+            /*prueba(void *)*/
+
+			if(pthread_create(&hilo_conexiones[conex_libre], NULL, recibir, (void *)(intptr_t)socket_con[conex_libre])!=0)
 			{
 				perror("pthread_create");
 				exit(-1);
@@ -400,7 +404,7 @@ void * escuchar(){
 		}
 	}
 	}
-	printf("hilo escuchar termina\n");
+	printf("thread listener finished\n");
 	return 0;
 }
 
@@ -473,10 +477,11 @@ void * handshake(){
 		socket_con[conex_libre] = lista_sockets[i];
 		conexiones[conex_libre] = lista_ips[i];
 		
-		printf("handshake: conexion a %s ACEPTADA\n",lista_ips[i]);
+		printf("handshake: conection a %s ACCEPTED\n",lista_ips[i]);
 		if((nbytes= send(lista_sockets[i], (char *)msgrot1, strlen(msgrot1), 0))<0){
 			perror("send");
-			/*exit(-1);*/		}
+			/*exit(-1);*/
+		}
 		if ((nbytes= recv(lista_sockets[i], (char *) resprot1, MAX_MESSAGE, 0))<0){
 			perror("recv");
 			/*exit(-1);*/
@@ -494,7 +499,7 @@ void * handshake(){
 			if(send(lista_sockets[i], (char *)msgrot2, strlen(msgrot2), 0)<0){
 			perror("send");
 			}
-			if(pthread_create( &hilo_conexiones[conex_libre], NULL, recibir, (void *)socket_con[conex_libre])!=0)
+			if(pthread_create( &hilo_conexiones[conex_libre], NULL, recibir, (void *)(intptr_t) socket_con[conex_libre])!=0)
 			{
 				perror("pthread_create");
 				exit(-1);
@@ -583,7 +588,8 @@ int re_handshake(char** ips_xtry){
 				
 				if((nbytes= send(lista_sockets[i], (char *)msgrot1, strlen(msgrot1), 0))<0){
 					perror("send");
-					/*exit(-1);*/				}
+					/*exit(-1);*/
+				}
 				if ((nbytes= recv(lista_sockets[i], (char *) resprot1, MAX_MESSAGE, 0))<0){
 					perror("recv");
 					/*exit(-1);*/
@@ -594,7 +600,7 @@ int re_handshake(char** ips_xtry){
 					if(send(lista_sockets[i], (char *)msgrot2, strlen(msgrot2), 0)<0){
 						perror("send");
 					}
-					if(pthread_create( &hilo_conexiones[conex_libre], NULL, recibir, (void *)socket_con[conex_libre])!=0)
+					if(pthread_create( &hilo_conexiones[conex_libre], NULL, recibir, (void *)(intptr_t) socket_con[conex_libre])!=0)
 					{
 						perror("pthread_create");
 						exit(-1);
@@ -692,12 +698,12 @@ void * interfaz(){
 		palabra =(char *) malloc(256);
 		
 		
-		printf("interfaz: introduzca comando\n");
+		printf("interface: insert a command\n");
 		scanf("%s",comando);
 		if (strcmp(comando,"find")==0)
 		{
 			query_hits_recibidas=0;
-			printf("Buscamos archivo\n");
+			printf("Looking file\n");
 			
 			numero_query_hit=0;
 			scanf("%s",palabra);
@@ -742,7 +748,7 @@ void * interfaz(){
 		G_ESCUCHAR = 0;
 		G_RECIBIR = 0;
 		G_INTERFAZ = 0;
-		printf("Cerrando programa espere un momento\n");
+		printf("Closing the program, wait a moment\n");
 		for(i = 0; i < conex_libre; i++){
 			if (close(socket_con[i])<0)
 			{
@@ -768,12 +774,13 @@ void * interfaz(){
 			set_menu(p,v);
 		}
 		}
-/*liberamos las variables locales*/free(lista_ips);
+/*liberamos las variables locales*/
+free(lista_ips);
 free(conexiones);
 free(nombres_compartidos);
 free(index_compartidos);
 free(tamanios_compartidos);
-printf("hilo interfaz termina\n");
+printf("thread UI finished\n");
 return 0;
 }
 
@@ -1141,7 +1148,7 @@ void * recibir(void* sock){
 		if(query_hits_recibidas==get_total_conexiones())
 		{
 			for(i=0;i<numero_query_hit;i++)
-				printf("%d.)nombre: %s\n tamaño %u\n ip_puerto %s\n",i+1,nombres_hit[i],tamanios_hit[i],ip_puerto_hit[i]);
+				printf("%d.)name: %s\n size %u\n ip_port%s\n",i+1,nombres_hit[i],tamanios_hit[i],ip_puerto_hit[i]);
 			query_hits_recibidas=0;
 	
 		}
@@ -1162,7 +1169,7 @@ void * recibir(void* sock){
 }
 }
 }
-printf("hilo recibir termina\n");
+printf("thread receibe finished\n");
 	/*if(G_RECIBIR == 1){
 	if (close(socket)<0){
 		perror("close");
@@ -1184,7 +1191,8 @@ int short2leb(char *dest, unsigned short v) {
        *dest++ = (v      ) & 0x000000FF;
        *dest++ = (v >>  8) & 0x000000FF;
             return 2;
-}unsigned short leb2short(char *orig) {
+}
+unsigned short leb2short(char *orig) {
        			return (unsigned short) (((unsigned char)orig[1] << 8) |(unsigned char)orig[0]);
 }
 
@@ -1256,7 +1264,7 @@ int block_recv(int sock, char * path,char * msg)
 	int len=0;
 	int k=0;
 	FILE *f;
-	printf("Recibiendo archivo\n");
+	printf("Receiving file\n");
 	size_cadena= (char*) malloc(20);
 	
 	
@@ -1301,7 +1309,7 @@ int block_recv(int sock, char * path,char * msg)
 	fclose(f);
 	/*copiamos el archivo a downloads y lo borramos*/
 	mover_a_downloads(path);
-	printf("Archivo: %s Recibido\n",archivo_recibir);
+	printf("File: %s received\n",archivo_recibir);
 return nbytes;
 }
 void mover_a_downloads(char * path)
